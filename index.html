@@ -164,14 +164,14 @@
 
         .arrow {
             position: absolute;
-            top: -15px; /* Zmniejszona pozycja */
+            top: -15px;
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
-            border-left: 10px solid transparent; /* Zmniejszona szerokość */
-            border-right: 10px solid transparent; /* Zmniejszona szerokość */
-            border-bottom: 20px solid var(--accent-color); /* Zmniejszona wysokość */
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 20px solid var(--accent-color);
             z-index: 10;
             display: none;
         }
@@ -528,10 +528,10 @@
         });
 
         function finishSpin(finalRotation) {
-            const normalizedRotation = finalRotation % 360;
+            const normalizedRotation = (finalRotation % 360 + 360) % 360; // Normalizacja do 0-360
             const arc = 360 / options.length;
-            // Poprawiona logika: indeks wylosowanej opcji na podstawie pozycji strzałki (góra koła)
-            const winningIndex = Math.floor(normalizedRotation / arc) % options.length;
+            // Poprawiona logika: indeks opcji pod strzałką (góra koła, 0°)
+            const winningIndex = Math.floor((normalizedRotation + arc / 2) / arc) % options.length;
             const winner = options[winningIndex];
             
             result.textContent = `${translations[currentLang].result} ${winner}`;
