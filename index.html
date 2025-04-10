@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Koło Fortuny</title>
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <style>
         :root {
             --bg-color: #1a1a1a;
@@ -164,24 +162,6 @@
             height: 100%;
         }
 
-        .arrow {
-            position: absolute;
-            bottom: -15px; /* Strzałka na dole */
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-top: 20px solid var(--accent-color); /* Wskazuje w dół */
-            z-index: 10;
-            display: none; /* Domyślnie ukryta */
-        }
-
-        .arrow.visible {
-            display: block; /* Pokazana po wylosowaniu */
-        }
-
         .spin-btn {
             display: block;
             margin: 20px auto;
@@ -242,7 +222,6 @@
             <textarea data-lang="placeholder" placeholder="Wpisz opcje (każda w nowej linii)"></textarea>
         </div>
         <div class="wheel-container">
-            <div class="arrow"></div>
             <canvas id="wheel" width="300" height="300"></canvas>
         </div>
         <button class="spin-btn" data-lang="spin" disabled>Zakręć kołem!</button>
@@ -355,7 +334,6 @@
         const resetBtn = document.querySelector('.reset-btn');
         const resetMenu = document.querySelector('.reset-menu');
         const muteBtn = document.querySelector('.mute-btn');
-        const arrow = document.querySelector('.arrow');
         let options = [];
         let isSpinning = false;
         let currentLang = 'pl';
@@ -491,15 +469,10 @@
             isSpinning = true;
             spinBtn.disabled = true;
             result.classList.remove('show');
-            arrow.classList.remove('visible'); // Ukryj strzałkę podczas obrotu
             if (!isMuted) spinSound.play();
             
-            // Losowanie indeksu zwycięzcy z wyprzedzeniem
-            const winningIndex = Math.floor(Math.random() * options.length);
-            const arc = 360 / options.length;
-            const targetAngle = winningIndex * arc; // Kąt docelowy dla wylosowanego segmentu
-            const spins = 13 + Math.random() * 5; // Pełne obroty
-            const totalRotation = spins * 360 + (targetAngle - 180); // Końcowa rotacja z uwzględnieniem strzałki na dole
+            const spins = 13 + Math.random() * 5; // Dostosowane dla 10 sekund
+            const totalRotation = spins * 360 + Math.random() * 360;
             let currentRotation = 0;
             const duration = 10000; // 10 sekund
             const startTime = performance.now();
@@ -507,15 +480,15 @@
             function animate(time) {
                 const elapsed = time - startTime;
                 const progress = Math.min(elapsed / duration, 1);
-                const ease = 1 - Math.pow(1 - progress, 4); // Easing
+                const ease = 1 - Math.pow(1 - progress, 4);
                 
                 currentRotation = totalRotation * ease;
-                canvas.style.transform = `rotate(${-currentRotation}deg)`; // Odwrócona rotacja dla zgodności ze strzałką
+                canvas.style.transform = `rotate(${currentRotation}deg)`;
 
                 if (progress < 1) {
                     requestAnimationFrame(animate);
                 } else {
-                    finishSpin(-currentRotation);
+                    finishSpin(currentRotation);
                 }
             }
 
@@ -523,20 +496,11 @@
         });
 
         function finishSpin(finalRotation) {
-            const normalizedRotation = (finalRotation % 360 + 360) % 360; // Normalizacja do 0-360
+            const normalizedRotation = finalRotation % 360;
             const arc = 360 / options.length;
-            const winningIndex = Math.floor((360 - normalizedRotation) / arc) % options.length;
+            const winningIndex = Math.floor(normalizedRotation / arc) % options.length;
             const winner = options[winningIndex];
-
-            // Obróć koło tak, aby wylosowany segment był pod strzałką (180°)
-            const targetAngle = winningIndex * arc;
-            const adjustedRotation = -(targetAngle - 180); // Strzałka na dole (180°)
-            canvas.style.transform = `rotate(${adjustedRotation}deg)`;
-
-            // Pokaż strzałkę po zakończeniu animacji
-            arrow.classList.add('visible');
-
-            // Wyświetl wynik
+            
             result.textContent = `${translations[currentLang].result} ${winner}`;
             result.classList.add('show');
             isSpinning = false;
