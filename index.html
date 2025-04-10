@@ -531,7 +531,7 @@
             const normalizedRotation = (finalRotation % 360 + 360) % 360; // Normalizacja do 0-360
             const arc = 360 / options.length;
             // Poprawiona logika: indeks opcji pod strzałką (góra koła, 0°)
-            const winningIndex = Math.floor((normalizedRotation + arc / 2) / arc) % options.length;
+            const winningIndex = (options.length - Math.floor(normalizedRotation / arc)) % options.length;
             const winner = options[winningIndex];
             
             result.textContent = `${translations[currentLang].result} ${winner}`;
