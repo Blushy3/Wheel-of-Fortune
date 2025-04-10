@@ -166,14 +166,14 @@
 
         .arrow {
             position: absolute;
-            bottom: -15px; /* Przeniesiona na dół */
+            bottom: -15px; /* Strzałka na dole */
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
             border-left: 10px solid transparent;
             border-right: 10px solid transparent;
-            border-top: 20px solid var(--accent-color); /* Odwrócona na dół */
+            border-top: 20px solid var(--accent-color); /* Wskazuje w dół */
             z-index: 10;
             display: none;
         }
@@ -188,7 +188,7 @@
 
         @keyframes bounce {
             0% { transform: translateX(-50%) translateY(0); }
-            100% { transform: translateX(-50%) translateY(5px); } /* Dostosowana animacja dla dołu */
+            100% { transform: translateX(-50%) translateY(5px); }
         }
 
         .spin-btn {
@@ -505,8 +505,12 @@
             if (!isMuted) spinSound.play();
             arrow.classList.add('spinning');
             
-            const spins = 13 + Math.random() * 5; // Dostosowane dla 10 sekund
-            const totalRotation = spins * 360 + Math.random() * 360;
+            // Losowanie indeksu zwycięzcy z wyprzedzeniem
+            const winningIndex = Math.floor(Math.random() * options.length);
+            const arc = 360 / options.length;
+            const targetAngle = winningIndex * arc; // Kąt docelowy dla wylosowanego segmentu
+            const spins = 13 + Math.random() * 5; // Pełne obroty
+            const totalRotation = spins * 360 + (targetAngle - 180); // Końcowa rotacja z uwzględnieniem strzałki na dole
             let currentRotation = 0;
             const duration = 10000; // 10 sekund
             const startTime = performance.now();
@@ -514,15 +518,15 @@
             function animate(time) {
                 const elapsed = time - startTime;
                 const progress = Math.min(elapsed / duration, 1);
-                const ease = 1 - Math.pow(1 - progress, 4);
+                const ease = 1 - Math.pow(1 - progress, 4); // Easing
                 
                 currentRotation = totalRotation * ease;
-                canvas.style.transform = `rotate(${currentRotation}deg)`;
+                canvas.style.transform = `rotate(${-currentRotation}deg)`; // Odwrócona rotacja dla zgodności ze strzałką
 
                 if (progress < 1) {
                     requestAnimationFrame(animate);
                 } else {
-                    finishSpin(currentRotation);
+                    finishSpin(-currentRotation);
                 }
             }
 
@@ -532,11 +536,16 @@
         function finishSpin(finalRotation) {
             const normalizedRotation = (finalRotation % 360 + 360) % 360; // Normalizacja do 0-360
             const arc = 360 / options.length;
-            // Strzałka na dole (180°), więc przesuwamy kąt o 180°
-            const adjustedRotation = (normalizedRotation + 180) % 360;
-            const winningIndex = Math.floor(adjustedRotation / arc) % options.length;
+            // Oblicz indeks wylosowanego segmentu na podstawie rotacji
+            const winningIndex = Math.floor((360 - normalizedRotation) / arc) % options.length;
             const winner = options[winningIndex];
-            
+
+            // Obróć koło tak, aby wylosowany segment był pod strzałką (180°)
+            const targetAngle = winningIndex * arc;
+            const adjustedRotation = -(targetAngle - 180); // Strzałka na dole (180°)
+            canvas.style.transform = `rotate(${adjustedRotation}deg)`;
+
+            // Wyświetl wynik
             result.textContent = `${translations[currentLang].result} ${winner}`;
             result.classList.add('show');
             arrow.classList.remove('spinning');
