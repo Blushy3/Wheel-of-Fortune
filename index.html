@@ -175,20 +175,11 @@
             border-right: 10px solid transparent;
             border-top: 20px solid var(--accent-color); /* Wskazuje w dół */
             z-index: 10;
-            display: none;
+            display: none; /* Domyślnie ukryta */
         }
 
         .arrow.visible {
-            display: block;
-        }
-
-        .arrow.spinning {
-            animation: bounce 0.2s infinite alternate;
-        }
-
-        @keyframes bounce {
-            0% { transform: translateX(-50%) translateY(0); }
-            100% { transform: translateX(-50%) translateY(5px); }
+            display: block; /* Pokazana po wylosowaniu */
         }
 
         .spin-btn {
@@ -469,11 +460,9 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (options.length === 0) {
-                arrow.classList.remove('visible');
                 return;
             }
 
-            arrow.classList.add('visible');
             const arc = 2 * Math.PI / options.length;
 
             options.forEach((option, i) => {
@@ -502,8 +491,8 @@
             isSpinning = true;
             spinBtn.disabled = true;
             result.classList.remove('show');
+            arrow.classList.remove('visible'); // Ukryj strzałkę podczas obrotu
             if (!isMuted) spinSound.play();
-            arrow.classList.add('spinning');
             
             // Losowanie indeksu zwycięzcy z wyprzedzeniem
             const winningIndex = Math.floor(Math.random() * options.length);
@@ -536,7 +525,6 @@
         function finishSpin(finalRotation) {
             const normalizedRotation = (finalRotation % 360 + 360) % 360; // Normalizacja do 0-360
             const arc = 360 / options.length;
-            // Oblicz indeks wylosowanego segmentu na podstawie rotacji
             const winningIndex = Math.floor((360 - normalizedRotation) / arc) % options.length;
             const winner = options[winningIndex];
 
@@ -545,10 +533,12 @@
             const adjustedRotation = -(targetAngle - 180); // Strzałka na dole (180°)
             canvas.style.transform = `rotate(${adjustedRotation}deg)`;
 
+            // Pokaż strzałkę po zakończeniu animacji
+            arrow.classList.add('visible');
+
             // Wyświetl wynik
             result.textContent = `${translations[currentLang].result} ${winner}`;
             result.classList.add('show');
-            arrow.classList.remove('spinning');
             isSpinning = false;
             spinBtn.disabled = false;
         }
