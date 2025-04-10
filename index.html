@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Koło Fortuny</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+            --accent-color: #ff6b6b;
+            --secondary-bg: #2d2d2d;
+        }
+
+        .light-theme {
+            --bg-color: #ffffff;
+            --text-color: #1a1a1a;
+            --accent-color: #ff6b6b;
+            --secondary-bg: #f0f0f0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            transition: transform 0.1s ease;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: var(--secondary-bg);
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .lang-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: var(--secondary-bg);
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .reset-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: var(--secondary-bg);
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .theme-toggle:hover, .lang-toggle:hover, .reset-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .lang-menu, .reset-menu {
+            position: fixed;
+            background: var(--secondary-bg);
+            border-radius: 10px;
+            padding: 10px;
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .lang-menu {
+            top: 60px;
+            right: 20px;
+        }
+
+        .reset-menu {
+            bottom: 60px;
+            left: 20px;
+        }
+
+        .lang-menu.show, .reset-menu.show {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .lang-option, .reset-option {
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            text-align: center;
+        }
+
+        .lang-option:hover, .reset-option:hover {
+            background: var(--accent-color);
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 15px;
+            background: var(--secondary-bg);
+            border: none;
+            border-radius: 10px;
+            color: var(--text-color);
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        textarea:focus {
+            outline: none;
+            box-shadow: 0 0 5px var(--accent-color);
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .arrow {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 30px solid var(--accent-color);
+            z-index: 10;
+            display: none;
+        }
+
+        .arrow.visible {
+            display: block;
+        }
+
+        .arrow.spinning {
+            animation: bounce 0.2s infinite alternate;
+        }
+
+        @keyframes bounce {
+            0% { transform: translateX(-50%) translateY(0); }
+            100% { transform: translateX(-50%) translateY(-5px); }
+        }
+
+        .spin-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 15px 30px;
+            background: var(--accent-color);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .spin-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .spin-btn:disabled {
+            opacity: 0.5;
+            transform: scale(1);
+            cursor: not-allowed;
+        }
+
+        .result {
+            text-align: center;
+            font-size: 24px;
+            margin-top: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .result.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" data-lang="theme">Zmień motyw</button>
+    <button class="lang-toggle" data-lang="lang">Zmień język</button>
+    <div class="lang-menu">
+        <div class="lang-option" data-lang-code="pl">Polski</div>
+        <div class="lang-option" data-lang-code="en">English</div>
+        <div class="lang-option" data-lang-code="es">Español</div>
+        <div class="lang-option" data-lang-code="fr">Français</div>
+        <div class="lang-option" data-lang-code="de">Deutsch</div>
+        <div class="lang-option" data-lang-code="it">Italiano</div>
+        <div class="lang-option" data-lang-code="ru">Русский</div>
+    </div>
+    <button class="reset-btn" data-lang="reset">Resetuj pamięć</button>
+    <div class="reset-menu">
+        <div data-lang="confirm-question">Czy na pewno chcesz zresetować pamięć?</div>
+        <div class="reset-option" data-action="confirm" data-lang="confirm">Tak</div>
+        <div class="reset-option" data-action="cancel" data-lang="cancel">Nie</div>
+    </div>
+    <div class="container">
+        <div class="input-section">
+            <textarea data-lang="placeholder" placeholder="Wpisz opcje (każda w nowej linii)"></textarea>
+        </div>
+        <div class="wheel-container">
+            <div class="arrow"></div>
+            <canvas id="wheel" width="300" height="300"></canvas>
+        </div>
+        <button class="spin-btn" data-lang="spin" disabled>Zakręć kołem!</button>
+        <div class="result"></div>
+    </div>
+
+    <script>
+        const translations = {
+            pl: {
+                theme: "Zmień motyw",
+                lang: "Zmień język",
+                placeholder: "Wpisz opcje (każda w nowej linii)",
+                spin: "Zakręć kołem!",
+                result: "Wylosowano:",
+                reset: "Resetuj pamięć",
+                "confirm-question": "Czy na pewno chcesz zresetować pamięć?",
+                confirm: "Tak",
+                cancel: "Nie"
+            },
+            en: {
+                theme: "Change theme",
+                lang: "Change language",
+                placeholder: "Enter options (one per line)",
+                spin: "Spin the wheel!",
+                result: "Result:",
+                reset: "Reset memory",
+                "confirm-question": "Are you sure you want to reset the memory?",
+                confirm: "Yes",
+                cancel: "No"
+            },
+            es: {
+                theme: "Cambiar tema",
+                lang: "Cambiar idioma",
+                placeholder: "Ingresa opciones (una por línea)",
+                spin: "¡Gira la rueda!",
+                result: "Resultado:",
+                reset: "Restablecer memoria",
+                "confirm-question": "¿Estás seguro de que quieres restablecer la memoria?",
+                confirm: "Sí",
+                cancel: "No"
+            },
+            fr: {
+                theme: "Changer de thème",
+                lang: "Changer de langue",
+                placeholder: "Entre les options (une par ligne)",
+                spin: "Tourne la roue !",
+                result: "Résultat :",
+                reset: "Réinitialiser la mémoire",
+                "confirm-question": "Es-tu sûr de vouloir réinitialiser la mémoire ?",
+                confirm: "Oui",
+                cancel: "Non"
+            },
+            de: {
+                theme: "Thema ändern",
+                lang: "Sprache ändern",
+                placeholder: "Optionen eingeben (eine pro Zeile)",
+                spin: "Dreh das Rad!",
+                result: "Ergebnis:",
+                reset: "Speicher zurücksetzen",
+                "confirm-question": "Bist du sicher, dass du den Speicher zurücksetzen willst?",
+                confirm: "Ja",
+                cancel: "Nein"
+            },
+            it: {
+                theme: "Cambia tema",
+                lang: "Cambia lingua",
+                placeholder: "Inserisci opzioni (una per riga)",
+                spin: "Gira la ruota!",
+                result: "Risultato:",
+                reset: "Resetta memoria",
+                "confirm-question": "Sei sicuro di voler resettare la memoria?",
+                confirm: "Sì",
+                cancel: "No"
+            },
+            ru: {
+                theme: "Сменить тему",
+                lang: "Сменить язык",
+                placeholder: "Введи варианты (по одному в строке)",
+                spin: "Крути колесо!",
+                result: "Результат:",
+                reset: "Сбросить память",
+                "confirm-question": "Ты уверен, что хочешь сбросить память?",
+                confirm: "Да",
+                cancel: "Нет"
+            }
+        };
+
+        const canvas = document.getElementById('wheel');
+        const ctx = canvas.getContext('2d');
+        const spinBtn = document.querySelector('.spin-btn');
+        const textarea = document.querySelector('textarea');
+        const result = document.querySelector('.result');
+        const themeToggle = document.querySelector('.theme-toggle');
+        const langToggle = document.querySelector('.lang-toggle');
+        const langMenu = document.querySelector('.lang-menu');
+        const resetBtn = document.querySelector('.reset-btn');
+        const resetMenu = document.querySelector('.reset-menu');
+        const arrow = document.querySelector('.arrow');
+        let options = [];
+        let isSpinning = false;
+        let currentLang = 'pl';
+
+        // Spin sound
+        const spinSound = new Audio('./spin.mp3');
+        spinSound.onerror = () => {
+            spinSound.src = 'https://www.freesfx.co.uk/sfx/wheel-spin.mp3';
+        };
+
+        // Load saved options from localStorage
+        const savedOptions = localStorage.getItem('wheelOptions');
+        if (savedOptions) {
+            textarea.value = savedOptions;
+            options = savedOptions.split('\n').filter(option => option.trim() !== '');
+            spinBtn.disabled = options.length < 2;
+            drawWheel();
+        }
+
+        // Theme toggle
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-theme');
+        });
+
+        // Language toggle
+        langToggle.addEventListener('click', () => {
+            langMenu.classList.toggle('show');
+            resetMenu.classList.remove('show'); // Zamknij menu resetu, jeśli otwarte
+        });
+
+        document.querySelectorAll('.lang-option').forEach(option => {
+            option.addEventListener('click', () => {
+                currentLang = option.getAttribute('data-lang-code');
+                updateLanguage();
+                langMenu.classList.remove('show');
+            });
+        });
+
+        // Reset button
+        resetBtn.addEventListener('click', () => {
+            resetMenu.classList.toggle('show');
+            langMenu.classList.remove('show'); // Zamknij menu języków, jeśli otwarte
+        });
+
+        document.querySelectorAll('.reset-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const action = option.getAttribute('data-action');
+                if (action === 'confirm') {
+                    localStorage.removeItem('wheelOptions');
+                    textarea.value = '';
+                    options = [];
+                    drawWheel();
+                    spinBtn.disabled = true;
+                }
+                resetMenu.classList.remove('show');
+            });
+        });
+
+        function updateLanguage() {
+            document.querySelectorAll('[data-lang]').forEach(element => {
+                const key = element.getAttribute('data-lang');
+                if (key === 'placeholder') {
+                    element.placeholder = translations[currentLang][key];
+                } else {
+                    element.textContent = translations[currentLang][key];
+                }
+            });
+        }
+
+        // Mouse movement effect
+        document.addEventListener('mousemove', (e) => {
+            const container = document.querySelector('.container');
+            const x = (e.clientX / window.innerWidth - 0.5) * 20;
+            const y = (e.clientY / window.innerHeight - 0.5) * 20;
+            container.style.transform = `translate(${x}px, ${y}px)`;
+        });
+
+        // Update options and save to localStorage
+        textarea.addEventListener('input', () => {
+            options = textarea.value.split('\n').filter(option => option.trim() !== '');
+            localStorage.setItem('wheelOptions', textarea.value);
+            spinBtn.disabled = options.length < 2;
+            drawWheel();
+        });
+
+        // Draw wheel
+        function drawWheel() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = canvas.width / 2;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (options.length === 0) {
+                arrow.classList.remove('visible');
+                return;
+            }
+
+            arrow.classList.add('visible');
+            const arc = 2 * Math.PI / options.length;
+
+            options.forEach((option, i) => {
+                const angle = i * arc;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, angle, angle + arc);
+                ctx.fillStyle = `hsl(${i * 360 / options.length}, 70%, 50%)`;
+                ctx.fill();
+
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(angle + arc / 2);
+                ctx.fillStyle = 'white';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText(option.substring(0, 15), radius - 10, 5);
+                ctx.restore();
+            });
+        }
+
+        // Spin wheel
+        spinBtn.addEventListener('click', () => {
+            if (isSpinning || options.length < 2) return;
+            
+            isSpinning = true;
+            spinBtn.disabled = true;
+            result.classList.remove('show');
+            spinSound.play();
+            arrow.classList.add('spinning');
+            
+            const spins = 13 + Math.random() * 5; // Dostosowane dla 10 sekund
+            const totalRotation = spins * 360 + Math.random() * 360;
+            let currentRotation = 0;
+            const duration = 10000; // 10 sekund
+            const startTime = performance.now();
+
+            function animate(time) {
+                const elapsed = time - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const ease = 1 - Math.pow(1 - progress, 4);
+                
+                currentRotation = totalRotation * ease;
+                canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    finishSpin(totalRotation);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        });
+
+        function finishSpin(finalRotation) {
+            const normalizedRotation = finalRotation % 360;
+            const arc = 360 / options.length;
+            const winningIndex = Math.floor((360 - normalizedRotation) / arc) % options.length;
+            const winner = options[winningIndex];
+            
+            result.textContent = `${translations[currentLang].result} ${winner}`;
+            result.classList.add('show');
+            arrow.classList.remove('spinning');
+            isSpinning = false;
+            spinBtn.disabled = false;
+        }
+
+        // Initial setup
+        updateLanguage();
+        drawWheel();
+    </script>
+</body>
+</html>
