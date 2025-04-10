@@ -74,7 +74,19 @@
             transition: transform 0.2s ease;
         }
 
-        .theme-toggle:hover, .lang-toggle:hover, .reset-btn:hover {
+        .mute-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: var(--secondary-bg);
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .theme-toggle:hover, .lang-toggle:hover, .reset-btn:hover, .mute-btn:hover {
             transform: scale(1.05);
         }
 
@@ -218,6 +230,7 @@
 <body>
     <button class="theme-toggle" data-lang="theme">Zmień motyw</button>
     <button class="lang-toggle" data-lang="lang">Zmień język</button>
+    <button class="mute-btn" data-lang="mute">Wycisz dźwięk</button>
     <div class="lang-menu">
         <div class="lang-option" data-lang-code="pl">Polski</div>
         <div class="lang-option" data-lang-code="en">English</div>
@@ -256,7 +269,9 @@
                 reset: "Resetuj pamięć",
                 "confirm-question": "Czy na pewno chcesz zresetować pamięć?",
                 confirm: "Tak",
-                cancel: "Nie"
+                cancel: "Nie",
+                mute: "Wycisz dźwięk",
+                unmute: "Włącz dźwięk"
             },
             en: {
                 theme: "Change theme",
@@ -267,7 +282,9 @@
                 reset: "Reset memory",
                 "confirm-question": "Are you sure you want to reset the memory?",
                 confirm: "Yes",
-                cancel: "No"
+                cancel: "No",
+                mute: "Mute sound",
+                unmute: "Unmute sound"
             },
             es: {
                 theme: "Cambiar tema",
@@ -278,7 +295,9 @@
                 reset: "Restablecer memoria",
                 "confirm-question": "¿Estás seguro de que quieres restablecer la memoria?",
                 confirm: "Sí",
-                cancel: "No"
+                cancel: "No",
+                mute: "Silenciar sonido",
+                unmute: "Activar sonido"
             },
             fr: {
                 theme: "Changer de thème",
@@ -289,7 +308,9 @@
                 reset: "Réinitialiser la mémoire",
                 "confirm-question": "Es-tu sûr de vouloir réinitialiser la mémoire ?",
                 confirm: "Oui",
-                cancel: "Non"
+                cancel: "Non",
+                mute: "Couper le son",
+                unmute: "Activer le son"
             },
             de: {
                 theme: "Thema ändern",
@@ -300,7 +321,9 @@
                 reset: "Speicher zurücksetzen",
                 "confirm-question": "Bist du sicher, dass du den Speicher zurücksetzen willst?",
                 confirm: "Ja",
-                cancel: "Nein"
+                cancel: "Nein",
+                mute: "Ton stummschalten",
+                unmute: "Ton einschalten"
             },
             it: {
                 theme: "Cambia tema",
@@ -311,7 +334,9 @@
                 reset: "Resetta memoria",
                 "confirm-question": "Sei sicuro di voler resettare la memoria?",
                 confirm: "Sì",
-                cancel: "No"
+                cancel: "No",
+                mute: "Silenzia suono",
+                unmute: "Attiva suono"
             },
             ru: {
                 theme: "Сменить тему",
@@ -322,7 +347,9 @@
                 reset: "Сбросить память",
                 "confirm-question": "Ты уверен, что хочешь сбросить память?",
                 confirm: "Да",
-                cancel: "Нет"
+                cancel: "Нет",
+                mute: "Выключить звук",
+                unmute: "Включить звук"
             }
         };
 
@@ -336,10 +363,12 @@
         const langMenu = document.querySelector('.lang-menu');
         const resetBtn = document.querySelector('.reset-btn');
         const resetMenu = document.querySelector('.reset-menu');
+        const muteBtn = document.querySelector('.mute-btn');
         const arrow = document.querySelector('.arrow');
         let options = [];
         let isSpinning = false;
         let currentLang = 'pl';
+        let isMuted = false;
 
         // Spin sound
         const spinSound = new Audio('./spin.mp3');
@@ -364,7 +393,7 @@
         // Language toggle
         langToggle.addEventListener('click', () => {
             langMenu.classList.toggle('show');
-            resetMenu.classList.remove('show'); // Zamknij menu resetu, jeśli otwarte
+            resetMenu.classList.remove('show');
         });
 
         document.querySelectorAll('.lang-option').forEach(option => {
@@ -378,7 +407,7 @@
         // Reset button
         resetBtn.addEventListener('click', () => {
             resetMenu.classList.toggle('show');
-            langMenu.classList.remove('show'); // Zamknij menu języków, jeśli otwarte
+            langMenu.classList.remove('show');
         });
 
         document.querySelectorAll('.reset-option').forEach(option => {
@@ -395,11 +424,20 @@
             });
         });
 
+        // Mute button
+        muteBtn.addEventListener('click', () => {
+            isMuted = !isMuted;
+            spinSound.muted = isMuted;
+            muteBtn.textContent = translations[currentLang][isMuted ? 'unmute' : 'mute'];
+        });
+
         function updateLanguage() {
             document.querySelectorAll('[data-lang]').forEach(element => {
                 const key = element.getAttribute('data-lang');
                 if (key === 'placeholder') {
                     element.placeholder = translations[currentLang][key];
+                } else if (element === muteBtn) {
+                    element.textContent = translations[currentLang][isMuted ? 'unmute' : 'mute'];
                 } else {
                     element.textContent = translations[currentLang][key];
                 }
@@ -464,7 +502,7 @@
             isSpinning = true;
             spinBtn.disabled = true;
             result.classList.remove('show');
-            spinSound.play();
+            if (!isMuted) spinSound.play();
             arrow.classList.add('spinning');
             
             const spins = 13 + Math.random() * 5; // Dostosowane dla 10 sekund
